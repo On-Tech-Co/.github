@@ -1,6 +1,4 @@
-# On Tech & Co 🚀
-
-Bem-vindo à On Tech & Co!
+Bem-vindo!
 
 Somos uma equipe dedicada ao desenvolvimento do **Projeto On**, uma plataforma de atendimento ao cliente com foco em autenticidade, experiência e inovação.
 
