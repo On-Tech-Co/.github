@@ -13,29 +13,34 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  enforce:
-    name: enforce
+  guard-stg:
+    name: stg
+    if: ${{ github.event.pull_request.base.ref == 'stg' }}
     runs-on: self-hosted
     steps:
-      - name: Validate PR flow (dev -> stg -> main)
+      - name: Enforce dev -> stg
         shell: bash
         run: |
           set -euo pipefail
-          DEV="dev"; STG="stg"; MAIN="main"
-          BASE="${{ github.event.pull_request.base.ref }}"
           HEAD="${{ github.event.pull_request.head.ref }}"
-          echo "Base: $BASE | Head: $HEAD | Policy: $DEV -> $STG -> $MAIN"
-
-          # Regra 1: PR para 'stg' só pode vir de 'dev'
-          if [[ "$BASE" == "$STG" && "$HEAD" != "$DEV" ]]; then
-            echo "::error title=Blocked PR::PR para '$STG' só é permitido a partir de '$DEV' (recebido de '$HEAD')."
+          if [ "$HEAD" != "dev" ]; then
+            echo "::error title=Blocked PR::PR para 'stg' só é permitido a partir de 'dev' (recebido de '$HEAD')."
             exit 1
           fi
+          echo "Fluxo permitido (dev -> stg) ✔"
 
-          # Regra 2: PR para 'main' só pode vir de 'stg'
-          if [[ "$BASE" == "$MAIN" && "$HEAD" != "$STG" ]]; then
-            echo "::error title=Blocked PR::PR para '$MAIN' só é permitido a partir de '$STG' (recebido de '$HEAD')."
+  guard-main:
+    name: main
+    if: ${{ github.event.pull_request.base.ref == 'main' }}
+    runs-on: self-hosted
+    steps:
+      - name: Enforce stg -> main
+        shell: bash
+        run: |
+          set -euo pipefail
+          HEAD="${{ github.event.pull_request.head.ref }}"
+          if [ "$HEAD" != "stg" ]; then
+            echo "::error title=Blocked PR::PR para 'main' só é permitido a partir de 'stg' (recebido de '$HEAD')."
             exit 1
           fi
-
-          echo "Fluxo permitido ✔"
+          echo "Fluxo permitido (stg -> main) ✔"
