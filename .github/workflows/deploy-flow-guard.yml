@@ -13,22 +13,6 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  guard-stg:
-    name: stg
-    if: ${{ github.event.pull_request.base.ref == 'stg' }}
-    runs-on: self-hosted
-    steps:
-      - name: Enforce dev -> stg
-        shell: bash
-        run: |
-          set -euo pipefail
-          HEAD="${{ github.event.pull_request.head.ref }}"
-          if [ "$HEAD" != "dev" ]; then
-            echo "::error title=Blocked PR::PR para 'stg' só é permitido a partir de 'dev' (recebido de '$HEAD')."
-            exit 1
-          fi
-          echo "Fluxo permitido (dev -> stg) ✔"
-
   guard-main:
     name: main
     if: ${{ github.event.pull_request.base.ref == 'main' }}
