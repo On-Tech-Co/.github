@@ -1,0 +1,41 @@
+name: Deploy Flow Guard
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, edited]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: deploy-flow-guard-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  enforce:
+    name: enforce
+    runs-on: self-hosted
+    steps:
+      - name: Validate PR flow (dev -> stg -> main)
+        shell: bash
+        run: |
+          set -euo pipefail
+          DEV="dev"; STG="stg"; MAIN="main"
+          BASE="${{ github.event.pull_request.base.ref }}"
+          HEAD="${{ github.event.pull_request.head.ref }}"
+          echo "Base: $BASE | Head: $HEAD | Policy: $DEV -> $STG -> $MAIN"
+
+          # Regra 1: PR para 'stg' só pode vir de 'dev'
+          if [[ "$BASE" == "$STG" && "$HEAD" != "$DEV" ]]; then
+            echo "::error title=Blocked PR::PR para '$STG' só é permitido a partir de '$DEV' (recebido de '$HEAD')."
+            exit 1
+          fi
+
+          # Regra 2: PR para 'main' só pode vir de 'stg'
+          if [[ "$BASE" == "$MAIN" && "$HEAD" != "$STG" ]]; then
+            echo "::error title=Blocked PR::PR para '$MAIN' só é permitido a partir de '$STG' (recebido de '$HEAD')."
+            exit 1
+          fi
+
+          echo "Fluxo permitido ✔"
